@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Happy Birthday Nuyin!</title>
+    <style>
+        :root {
+            --card-width: 5in;
+            --card-height: 5in;
+            --transition-speed: 0.75s;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #0b0f17;
+            background-image: radial-gradient(circle at 50% 50%, #1a2636 0%, #070a0e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            perspective: 2000px;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Main 3D Container set to 5in x 5in */
+        .scene {
+            width: min(5in, 85vw);
+            height: min(5in, 85vw);
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Shift scene right when spread opens so it remains centered on screen */
+        .scene.is-open {
+            transform: translateX(calc(min(5in, 85vw) / 2));
+        }
+
+        /* Single Page Mode when closing or returning */
+        .scene.is-closing-single {
+            transform: translateX(0) !important;
+        }
+
+        .scene.is-closing-single .card-cover-hinge {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Hinged Cover Element */
+        .card-cover-hinge {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transform-style: preserve-3d;
+            transform-origin: left center;
+            transition: transform var(--transition-speed) cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            border-radius: 12px;
+            z-index: 10;
+        }
+
+        .scene.is-open .card-cover-hinge {
+            transform: rotateY(-180deg);
+        }
+
+        /* Page Base Face */
+        .page-face {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #151d28;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Front Cover Face */
+        .page-front {
+            z-index: 2;
+            cursor: pointer;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            pointer-events: none;
+        }
+
+        /* Inside Left Spread (Back of cover - Envelope) */
+        .page-inside-left {
+            transform: rotateY(180deg);
+            z-index: 1;
+            cursor: pointer;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Inside Right Spread Page (Cake Page) */
+        .page-inside-right {
+            z-index: 1;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #151d28;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px;
+            box-shadow: 10px 15px 35px rgba(0,0,0,0.5);
+            overflow: hidden;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .scene.is-open .page-inside-right,
+        .scene.is-closing-single .page-inside-right {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .cake-wrapper {
+            position: relative;
+            width: 100%;
+            height: 82%;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #0f1620;
+        }
+
+        /* Controls Panel */
+        .controls-panel {
+            width: 100%;
+            height: 16%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            z-index: 10;
+        }
+
+        .meter-bar-bg {
+            width: 88%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .meter-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #4caf50, #ffeb3b, #ff5722);
+            transition: width 0.08s ease-out;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #2b5876, #4e4376);
+            color: #ffffff;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(135deg, #32668a, #5a4e8a);
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #d35d69, #8c2530);
+        }
+
+        .tap-hint {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #ffffff;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            pointer-events: none;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.2);
+            white-space: nowrap;
+        }
+
+        /* Full Uncropped Letter Pop-up Modal */
+        .letter-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(5, 8, 14, 0.92);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.2, 0.64, 1);
+            transform: scale(0.92);
+        }
+
+        .letter-modal-overlay.is-visible {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1);
+        }
+
+        .letter-content-box {
+            position: relative;
+            width: 100%;
+            max-width: 520px;
+            height: 88vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Strict object-fit contain so the full letter is 100% visible without any cropping */
+        .letter-full-img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.8));
+            border-radius: 8px;
+        }
+
+        /* Closing Page Spread Overlay (Single Page Mode) */
+        .closing-page-flipper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+            opacity: 0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #151d28;
+        }
+
+        .closing-page-flipper.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .closing-content-wrapper {
+            width: 100%;
+            height: 100%;
+            background: #151d28;
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        .closing-img-container {
+            width: 100%;
+            height: 86%;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        @media (max-width: 700px) {
+            .scene.is-open {
+                transform: translateX(0) scale(0.85);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scene" id="cardScene">
+        
+        <!-- Inside Right Spread Page (Cake & Blow Action) -->
+        <div class="page-inside-right" id="rightPage">
+            
+            <div class="cake-wrapper">
+                <img id="cakeImg" src="image_4.png" class="card-img" alt="Birthday Cake">
+                <canvas id="confetti-canvas"></canvas>
+            </div>
+
+            <!-- Controls Panel -->
+            <div class="controls-panel">
+                <div class="meter-bar-bg">
+                    <div class="meter-bar-fill" id="meterFill"></div>
+                </div>
+                
+                <button class="action-btn" id="blowBtn">
+                    💨 Hold to Blow (or Space)
+                </button>
+            </div>
+
+            <!-- Single Page Closing Spread Overlay -->
+            <div class="closing-page-flipper" id="closingFlipper">
+                <div class="closing-content-wrapper">
+                    <div class="closing-img-container">
+                        <img id="closingImg" src="image_5.png" class="card-img" alt="Closing Photo">
+                    </div>
+                    <button class="action-btn secondary" id="backToCoverBtn" style="width: 100%;">
+                        🔄 Back to Cover
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 3D Hinged Rotating Front Cover & Envelope Spread -->
+        <div class="card-cover-hinge" id="coverHinge">
+            
+            <!-- Inside Left Page Spread (Envelope) -->
+            <div class="page-face page-inside-left" id="envelopePage">
+                <img id="envelopeImg" src="image_2.png" class="card-img" alt="Envelope">
+                <div class="tap-hint">✉️ Tap envelope to read letter</div>
+            </div>
+
+            <!-- Front Cover Page -->
+            <div class="page-face page-front" id="coverPage">
+                <img id="coverImg" src="image.png" class="card-img" alt="Card Cover">
+                <div class="tap-hint">✨ Tap cover to open</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Full Uncropped Letter Pop-up Overlay Modal -->
+    <div class="letter-modal-overlay" id="letterModal">
+        <div class="letter-content-box" id="letterBox">
+            <img id="letterImg" src="image_3.png" class="letter-full-img" alt="Birthday Letter">
+            <div class="tap-hint" style="bottom: 10px;">✉️ Tap anywhere to close letter</div>
+        </div>
+    </div>
+
+    <script>
+        // Automatic extension fallback for Windows file naming differences
+        function setupSmartImage(imgElement, baseFilename) {
+            const candidateExtensions = [
+                ".png", ".jpg", ".jpeg", ".PNG", ".JPG", ".JPEG", ".webp", ".png.png", ".jpg.png"
+            ];
+            let currentIdx = 0;
+
+            imgElement.onerror = function() {
+                if (currentIdx < candidateExtensions.length) {
+                    const ext = candidateExtensions[currentIdx];
+                    currentIdx++;
+                    imgElement.src = baseFilename + ext;
+                }
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Bind smart image extension handlers
+            setupSmartImage(document.getElementById('coverImg'), 'image');
+            setupSmartImage(document.getElementById('envelopeImg'), 'image_2');
+            setupSmartImage(document.getElementById('letterImg'), 'image_3');
+            setupSmartImage(document.getElementById('cakeImg'), 'image_4');
+            setupSmartImage(document.getElementById('closingImg'), 'image_5');
+
+            const scene = document.getElementById('cardScene');
+            const coverPage = document.getElementById('coverPage');
+            const envelopePage = document.getElementById('envelopePage');
+            const letterModal = document.getElementById('letterModal');
+            const blowBtn = document.getElementById('blowBtn');
+            const backToCoverBtn = document.getElementById('backToCoverBtn');
+            const closingFlipper = document.getElementById('closingFlipper');
+            const meterFill = document.getElementById('meterFill');
+
+            let isCardOpen = false;
+            let candlesBlown = false;
+            let blowDuration = 0;
+            let isHoldingBlow = false;
+            const BLOW_REQUIRED_STEPS = 20;
+
+            // 1. Open Card Spread on Tap
+            coverPage.addEventListener('click', () => {
+                if (!isCardOpen) {
+                    scene.classList.add('is-open');
+                    isCardOpen = true;
+                    initMicAccess();
+                }
+            });
+
+            // 2. Display Full Uncropped Letter on Envelope Click
+            envelopePage.addEventListener('click', () => {
+                letterModal.classList.add('is-visible');
+            });
+
+            // Close Full Letter Modal on Tap
+            letterModal.addEventListener('click', () => {
+                letterModal.classList.remove('is-visible');
+            });
+
+            // 3. Return Back to Closed Cover
+            backToCoverBtn.addEventListener('click', () => {
+                closingFlipper.classList.remove('active');
+                scene.classList.remove('is-closing-single');
+                scene.classList.remove('is-open');
+                isCardOpen = false;
+                resetCandlesState();
+            });
+
+            // Blow button interactions
+            blowBtn.addEventListener('mousedown', startBlowingAction);
+            blowBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startBlowingAction(); });
+            window.addEventListener('mouseup', stopBlowingAction);
+            window.addEventListener('touchend', stopBlowingAction);
+
+            // Spacebar blowing trigger
+            window.addEventListener('keydown', (e) => {
+                if (e.code === 'Space' && isCardOpen && !candlesBlown && !isHoldingBlow) {
+                    e.preventDefault();
+                    startBlowingAction();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (e.code === 'Space') stopBlowingAction();
+            });
+
+            function startBlowingAction() {
+                if (candlesBlown) return;
+                isHoldingBlow = true;
+                processBlowingLoop();
+            }
+
+            function stopBlowingAction() {
+                isHoldingBlow = false;
+                if (!candlesBlown) {
+                    meterFill.style.width = '0%';
+                    blowDuration = 0;
+                }
+            }
+
+            function processBlowingLoop() {
+                if (!isHoldingBlow || candlesBlown) return;
+
+                blowDuration += 2;
+                const percentage = Math.min(100, (blowDuration / BLOW_REQUIRED_STEPS) * 100);
+                meterFill.style.width = percentage + '%';
+
+                if (blowDuration >= BLOW_REQUIRED_STEPS) {
+                    extinguishCandles();
+                } else {
+                    requestAnimationFrame(processBlowingLoop);
+                }
+            }
+
+            // Microphone Detection
+            let audioCtx, analyser;
+
+            async function initMicAccess() {
+                if (audioCtx) return;
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 256;
+                    const source = audioCtx.createMediaStreamSource(stream);
+                    source.connect(analyser);
+                    listenMicLevel();
+                } catch (err) {
+                    // Fallback to button/spacebar
+                }
+            }
+
+            function listenMicLevel() {
+                if (candlesBlown || !analyser) return;
+
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyser.getByteFrequencyData(dataArray);
+
+                let sum = 0;
+                for (let i = 0; i < Math.floor(bufferLength / 4); i++) {
+                    sum += dataArray[i];
+                }
+                const volume = sum / (bufferLength / 4);
+
+                if (!isHoldingBlow) {
+                    meterFill.style.width = Math.min(100, (volume / 60) * 100) + '%';
+                }
+
+                if (volume > 30) {
+                    blowDuration++;
+                    if (blowDuration >= BLOW_REQUIRED_STEPS) {
+                        extinguishCandles();
+                        return;
+                    }
+                } else if (!isHoldingBlow && blowDuration > 0) {
+                    blowDuration--;
+                }
+
+                requestAnimationFrame(listenMicLevel);
+            }
+
+            function extinguishCandles() {
+                candlesBlown = true;
+                meterFill.style.width = '0%';
+                startConfettiAnimation();
+
+                // Direct transition to single closing page
+                setTimeout(() => {
+                    scene.classList.remove('is-open');
+                    scene.classList.add('is-closing-single');
+                    closingFlipper.classList.add('active');
+                }, 500);
+            }
+
+            function resetCandlesState() {
+                candlesBlown = false;
+                blowDuration = 0;
+                stopConfetti();
+                if (audioCtx) listenMicLevel();
+            }
+
+            // Confetti Cannon
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            let confettiParticles = [];
+            let confettiAnimationId;
+
+            function resizeConfettiCanvas() {
+                const rect = document.querySelector('.cake-wrapper').getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+            }
+            window.addEventListener('resize', resizeConfettiCanvas);
+            resizeConfettiCanvas();
+
+            function startConfettiAnimation() {
+                resizeConfettiCanvas();
+                confettiParticles = [];
+                const colors = ['#ff8a80', '#ffd180', '#ffff8d', '#80d8ff', '#a7ffeb', '#d35d69'];
+                
+                for (let i = 0; i < 70; i++) {
+                    confettiParticles.push({
+                        x: canvas.width / 2,
+                        y: canvas.height / 2,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.7) * 10,
+                        size: Math.random() * 6 + 3,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        rotation: Math.random() * 360,
+                        rotSpeed: (Math.random() - 0.5) * 8
+                    });
+                }
+                renderConfettiFrame();
+            }
+
+            function renderConfettiFrame() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let stillActive = false;
+
+                confettiParticles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.22;
+                    p.rotation += p.rotSpeed;
+
+                    if (p.y < canvas.height) stillActive = true;
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rotation * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                if (stillActive) {
+                    confettiAnimationId = requestAnimationFrame(renderConfettiFrame);
+                }
+            }
+
+            function stopConfetti() {
+                if (confettiAnimationId) cancelAnimationFrame(confettiAnimationId);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                confettiParticles = [];
+            }
+        });
+    </script>
+</body>
+</html>
